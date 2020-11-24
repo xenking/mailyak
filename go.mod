@@ -1,3 +1,3 @@
-module github.com/domodwyer/mailyak/v3
+module github.com/xenking/mailyak/v3
 
-go 1.12
+go 1.15

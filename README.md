@@ -1,6 +1,6 @@
 [![Build
-Status](https://travis-ci.org/domodwyer/mailyak.svg?branch=master)](https://travis-ci.org/domodwyer/mailyak)
-[![GoDoc](https://godoc.org/github.com/domodwyer/mailyak?status.svg)](https://godoc.org/github.com/domodwyer/mailyak)
+Status](https://travis-ci.org/xenking/mailyak.svg?branch=master)](https://travis-ci.org/xenking/mailyak)
+[![GoDoc](https://godoc.org/github.com/xenking/mailyak?status.svg)](https://godoc.org/github.com/xenking/mailyak)
 
 <p align="center">
 <img src="https://s3-eu-west-1.amazonaws.com/iab-assets/mailyak-header.png" />
@@ -26,13 +26,13 @@ A simple, easy to use email library for Go (golang).
 If you're using  `go mod`:
 
 ```bash
-go get -v github.com/domodwyer/mailyak/v3
+go get -v github.com/xenking/mailyak/v3
 ```
 
 Or with `GOPATH`:
 
 ```bash
-go get -v github.com/domodwyer/mailyak
+go get -v github.com/xenking/mailyak
 ```
 
 # Usage
