@@ -23,6 +23,7 @@ type attachment struct {
 	filename string
 	content  io.Reader
 	inline   bool
+	raw      bool
 	mimeType string
 }
 
@@ -36,6 +37,21 @@ func (m *MailYak) Attach(name string, r io.Reader) {
 		filename: name,
 		content:  r,
 		inline:   false,
+	})
+}
+
+// AttachRaw adds the contents of r to the email as an attachment with
+// name as the filename and raw as the specified Encoding type of the content.
+// It is up to the user to ensure the raw is correct.
+//
+// r is not read until Send is called.
+func (m *MailYak) AttachRaw(name string, r io.Reader, mimeType string) {
+	m.attachments = append(m.attachments, attachment{
+		filename: name,
+		content:  r,
+		raw:      true,
+		inline:   false,
+		mimeType: mimeType,
 	})
 }
 
@@ -117,6 +133,20 @@ func (m *MailYak) writeAttachments(mixed partCreator, splitter writeWrapper) err
 		part, err := mixed.CreatePart(getMIMEHeader(item, ctype))
 		if err != nil {
 			return err
+		}
+
+		if item.raw {
+			rawWriter := splitter.new(part)
+			if _, err := rawWriter.Write(h[:hLen]); err != nil {
+				return err
+			}
+			// More to write?
+			if hLen == sniffLen {
+				if _, err := io.Copy(rawWriter, item.content); err != nil {
+					return err
+				}
+			}
+			continue
 		}
 
 		encoder := base64.NewEncoder(base64.StdEncoding, splitter.new(part))

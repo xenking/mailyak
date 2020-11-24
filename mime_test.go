@@ -483,9 +483,24 @@ func TestMailYakBuildMime_withAttachments(t *testing.T) {
 			"",
 			"",
 			[]attachment{
-				{"test.txt", strings.NewReader("content"), false, ""},
+				{"test.txt", strings.NewReader("content"), false, false, ""},
 			},
 			[]string{"Y29udGVudA=="},
+			false,
+		},
+		{
+			"One attachment raw",
+			[]byte{},
+			[]byte{},
+			[]string{""},
+			"",
+			"",
+			"",
+			"",
+			[]attachment{
+				{"test.pdf", strings.NewReader("JVBERi0xLjcKCjEgMCBvYmogICUgZW50cnkgcG9pbnQKPDwKICAvVHlwZSAvQ2F0YWxvZwogIC9QYWdlcyAyIDAgUgo+PgplbmRvYmoKCjIgMCBvYmoKPDwKICAvVHlwZSAvUGFnZXMKICAvTWVkaWFCb3ggWyAwIDAgMjAwIDIwMCBdCiAgL0NvdW50IDEKICAvS2lkcyBbIDMgMCBSIF0KPj4KZW5kb2JqCgozIDAgb2JqCjw8CiAgL1R5cGUgL1BhZ2UKICAvUGFyZW50IDIgMCBSCiAgL1Jlc291cmNlcyA8PAogICAgL0ZvbnQgPDwKICAgICAgL0YxIDQgMCBSIAogICAgPj4KICA+PgogIC9Db250ZW50cyA1IDAgUgo+PgplbmRvYmoKCjQgMCBvYmoKPDwKICAvVHlwZSAvRm9udAogIC9TdWJ0eXBlIC9UeXBlMQogIC9CYXNlRm9udCAvVGltZXMtUm9tYW4KPj4KZW5kb2JqCgo1IDAgb2JqICAlIHBhZ2UgY29udGVudAo8PAogIC9MZW5ndGggNDQKPj4Kc3RyZWFtCkJUCjcwIDUwIFRECi9GMSAxMiBUZgooSGVsbG8sIHdvcmxkISkgVGoKRVQKZW5kc3RyZWFtCmVuZG9iagoKeHJlZgowIDYKMDAwMDAwMDAwMCA2NTUzNSBmIAowMDAwMDAwMDEwIDAwMDAwIG4gCjAwMDAwMDAwNzkgMDAwMDAgbiAKMDAwMDAwMDE3MyAwMDAwMCBuIAowMDAwMDAwMzAxIDAwMDAwIG4gCjAwMDAwMDAzODAgMDAwMDAgbiAKdHJhaWxlcgo8PAogIC9TaXplIDYKICAvUm9vdCAxIDAgUgo+PgpzdGFydHhyZWYKNDkyCiUlRU9G"), false, true, "application/pdf"},
+			},
+			[]string{"JVBERi0xLjcKCjEgMCBvYmogICUgZW50cnkgcG9pbnQKPDwKICAvVHlwZSAv\r\nQ2F0YWxvZwogIC9QYWdlcyAyIDAgUgo+PgplbmRvYmoKCjIgMCBvYmoKPDwK\r\nICAvVHlwZSAvUGFnZXMKICAvTWVkaWFCb3ggWyAwIDAgMjAwIDIwMCBdCiAg\r\nL0NvdW50IDEKICAvS2lkcyBbIDMgMCBSIF0KPj4KZW5kb2JqCgozIDAgb2Jq\r\nCjw8CiAgL1R5cGUgL1BhZ2UKICAvUGFyZW50IDIgMCBSCiAgL1Jlc291cmNl\r\ncyA8PAogICAgL0ZvbnQgPDwKICAgICAgL0YxIDQgMCBSIAogICAgPj4KICA+\r\nPgogIC9Db250ZW50cyA1IDAgUgo+PgplbmRvYmoKCjQgMCBvYmoKPDwKICAv\r\nVHlwZSAvRm9udAogIC9TdWJ0eXBlIC9UeXBlMQogIC9CYXNlRm9udCAvVGlt\r\nZXMtUm9tYW4KPj4KZW5kb2JqCgo1IDAgb2JqICAlIHBhZ2UgY29udGVudAo8\r\nPAogIC9MZW5ndGggNDQKPj4Kc3RyZWFtCkJUCjcwIDUwIFRECi9GMSAxMiBU\r\nZgooSGVsbG8sIHdvcmxkISkgVGoKRVQKZW5kc3RyZWFtCmVuZG9iagoKeHJl\r\nZgowIDYKMDAwMDAwMDAwMCA2NTUzNSBmIAowMDAwMDAwMDEwIDAwMDAwIG4g\r\nCjAwMDAwMDAwNzkgMDAwMDAgbiAKMDAwMDAwMDE3MyAwMDAwMCBuIAowMDAw\r\nMDAwMzAxIDAwMDAwIG4gCjAwMDAwMDAzODAgMDAwMDAgbiAKdHJhaWxlcgo8\r\nPAogIC9TaXplIDYKICAvUm9vdCAxIDAgUgo+PgpzdGFydHhyZWYKNDkyCiUl\r\nRU9G"},
 			false,
 		},
 		{
@@ -498,7 +513,7 @@ func TestMailYakBuildMime_withAttachments(t *testing.T) {
 			"",
 			"",
 			[]attachment{
-				{"test.txt", strings.NewReader("content"), true, ""},
+				{"test.txt", strings.NewReader("content"), true, false, ""},
 			},
 			[]string{"Y29udGVudA=="},
 			false,
@@ -513,8 +528,8 @@ func TestMailYakBuildMime_withAttachments(t *testing.T) {
 			"",
 			"",
 			[]attachment{
-				{"test.txt", strings.NewReader("content"), false, ""},
-				{"another.txt", strings.NewReader("another"), false, ""},
+				{"test.txt", strings.NewReader("content"), false, false, ""},
+				{"another.txt", strings.NewReader("another"), false, false, ""},
 			},
 			[]string{"Y29udGVudA==", "YW5vdGhlcg=="},
 			false,
@@ -529,8 +544,8 @@ func TestMailYakBuildMime_withAttachments(t *testing.T) {
 			"",
 			"",
 			[]attachment{
-				{"test.txt", strings.NewReader("content"), true, ""},
-				{"another.txt", strings.NewReader("another"), true, ""},
+				{"test.txt", strings.NewReader("content"), true, false, ""},
+				{"another.txt", strings.NewReader("another"), true, false, ""},
 			},
 			[]string{"Y29udGVudA==", "YW5vdGhlcg=="},
 			false,
