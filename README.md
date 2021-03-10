@@ -1,6 +1,10 @@
-[![Build
-Status](https://travis-ci.org/xenking/mailyak.svg?branch=master)](https://travis-ci.org/xenking/mailyak)
-[![GoDoc](https://godoc.org/github.com/xenking/mailyak?status.svg)](https://godoc.org/github.com/xenking/mailyak)
+[![Build Status](https://www.travis-ci.com/xenking/mailyak.svg?branch=master)](https://www.travis-ci.com/xenking/mailyak)
+[![Tests](https://github.com/xenking/mailyak/actions/workflows/go-test.yml/badge.svg)](https://github.com/xenking/mailyak/actions/workflows/go-test.yml)
+[![Lints](https://github.com/xenking/mailyak/actions/workflows/lints.yml/badge.svg)](https://github.com/xenking/mailyak/actions/workflows/lints.yml)
+[![codecov](https://codecov.io/gh/xenking/mailyak/branch/master/graph/badge.svg)](https://codecov.io/gh/xenking/mailyak)
+[![Go Report Card](https://goreportcard.com/badge/github.com/xenking/mailyak)](https://goreportcard.com/report/github.com/xenking/mailyak)
+[![Go Reference](https://pkg.go.dev/badge/github.com/xenking/mailyak/v3.svg)](https://pkg.go.dev/github.com/xenking/mailyak/v3)
+
 
 <p align="center">
 <img src="https://s3-eu-west-1.amazonaws.com/iab-assets/mailyak-header.png" />
@@ -39,8 +43,9 @@ go get -v github.com/xenking/mailyak
 
 ```Go
 // Create a new email - specify the SMTP host:port and auth (if needed)
-mail := mailyak.New("mail.host.com:25", smtp.PlainAuth("", "user", "pass", "mail.host.com"))
+my := mailyak.New("mail.host.com:25", smtp.PlainAuth("", "user", "pass", "mail.host.com"))
 
+mail := my.NewMail()
 mail.To("dom@itsallbroken.com")
 mail.From("jsmith@example.com")
 mail.FromName("Bananas for Friends")
@@ -57,15 +62,16 @@ if err := t.ExecuteTemplate(mail.HTML(), "htmlEmail", data); err != nil {
 mail.Plain().Set("Get a real email client")
 
 // And you're done! 
-if err := mail.Send(); err != nil {
+if err := my.Send(mail); err != nil {
     panic(" 💣 ")
 }
 ```
 
 To send an attachment:
 ```Go
-mail := mailyak.New("mail.host.com:25", smtp.PlainAuth("", "user", "pass", "mail.host.com"))
+my := mailyak.New("mail.host.com:25", smtp.PlainAuth("", "user", "pass", "mail.host.com"))
 
+mail := my.NewMail()
 mail.To("dom@itsallbroken.com")
 mail.From("oops@itsallbroken.com")
 mail.Subject("I am a teapot")
@@ -75,7 +81,7 @@ mail.HTML().Set("Don't panic")
 // call multiple times to attach multiple files
 mail.Attach("filename.txt", &input)
 
-if err := mail.Send(); err != nil {
+if err := my.Send(mail); err != nil {
     panic(" 💣 ")
 }
 ```
