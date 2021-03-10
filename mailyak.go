@@ -5,14 +5,14 @@ import (
 	"fmt"
 	"net/smtp"
 	"regexp"
-	"sync/atomic"
 	"time"
 )
 
 // MailYak is an easy-to-use email builder.
 type MailYak struct {
-	auth   atomic.Value
-	sender emailSender
+	sender   emailSender
+	auth     smtp.Auth
+	needAuth bool
 }
 
 // New returns an instance of MailYak using host as the SMTP server, and
@@ -34,9 +34,7 @@ func New(host string, auth smtp.Auth) *MailYak {
 	m := &MailYak{
 		sender: newSenderWithStartTLS(host),
 	}
-	if auth != nil {
-		m.auth.Store(auth)
-	}
+	m.auth = auth
 	return m
 }
 
@@ -77,7 +75,7 @@ func NewWithTLS(host string, auth smtp.Auth, tlsConfig *tls.Config) (*MailYak, e
 func (m *MailYak) NewMail() *Mail {
 	mail := getMail()
 	mail.date = time.Now().Format(mailDateFormat)
-	mail.auth = m.auth.Load().(smtp.Auth)
+	mail.auth = m.auth
 	return mail
 }
 
@@ -100,7 +98,7 @@ func (m *MailYak) String() string {
 
 	return fmt.Sprintf(
 		"&MailYak{auth set: %v, explicit tls: %v}",
-		m.auth.Load().(smtp.Auth) != nil,
+		m.auth != nil,
 		isTLSSender,
 	)
 }

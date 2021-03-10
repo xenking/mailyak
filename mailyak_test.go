@@ -60,3 +60,27 @@ func TestMailYakDate(t *testing.T) {
 		t.Errorf("MailYak.Send(): timestamp not updated: %v", dateOne)
 	}
 }
+
+// TestMailYakDate ensures that mail can be sent without auth
+func TestMailNilAuth(t *testing.T) {
+	t.Parallel()
+
+	my := New("mail.host.com:25", nil)
+	mail := my.NewMail()
+	mail.From("from@example.org")
+	mail.To("to@example.org")
+	mail.Subject("Test subject")
+
+	// send two emails at different times (discarding any errors)
+	_, _ = mail.MimeBuf()
+	dateOne := mail.date
+
+	time.Sleep(1 * time.Second)
+
+	_, _ = mail.MimeBuf()
+	dateTwo := mail.date
+
+	if dateOne == dateTwo {
+		t.Errorf("MailYak.Send(): timestamp not updated: %v", dateOne)
+	}
+}
