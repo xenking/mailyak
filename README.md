@@ -42,47 +42,67 @@ go get -v github.com/xenking/mailyak
 # Usage
 
 ```Go
-// Create a new email - specify the SMTP host:port and auth (if needed)
-my := mailyak.New("mail.host.com:25", smtp.PlainAuth("", "user", "pass", "mail.host.com"))
+package main
 
-mail := my.NewMail()
-mail.To("dom@itsallbroken.com")
-mail.From("jsmith@example.com")
-mail.FromName("Bananas for Friends")
+import (
+  "net/smtp"
+  
+  "github.com/xenking/mailyak/v3"
+)
 
-mail.Subject("Business proposition")
+func main() {
+  // Create a new email - specify the SMTP host:port and auth (if needed)
+  my := mailyak.New("mail.host.com:25", smtp.PlainAuth("", "user", "pass", "mail.host.com"))
 
-// mail.HTML() and mail.Plain() implement io.Writer, so you can do handy things like
-// parse a template directly into the email body
-if err := t.ExecuteTemplate(mail.HTML(), "htmlEmail", data); err != nil {
+  mail := my.NewMail()
+  mail.To("dom@itsallbroken.com")
+  mail.From("jsmith@example.com")
+  mail.FromName("Bananas for Friends")
+
+  mail.Subject("Business proposition")
+
+  // mail.HTML() and mail.Plain() implement io.Writer, so you can do handy things like
+  // parse a template directly into the email body
+  if err := t.ExecuteTemplate(mail.HTML(), "htmlEmail", data); err != nil {
     panic(" 💣 ")
-}
+  }
 
-// Or set the body using a string setter
-mail.Plain().Set("Get a real email client")
+  // Or set the body using a string setter
+  mail.Plain().SetString("Get a real email client")
 
-// And you're done! 
-if err := my.Send(mail); err != nil {
+  // And you're done! 
+  if err := my.Send(mail); err != nil {
     panic(" 💣 ")
+  }
 }
 ```
 
 To send an attachment:
 ```Go
-my := mailyak.New("mail.host.com:25", smtp.PlainAuth("", "user", "pass", "mail.host.com"))
+package main
 
-mail := my.NewMail()
-mail.To("dom@itsallbroken.com")
-mail.From("oops@itsallbroken.com")
-mail.Subject("I am a teapot")
-mail.HTML().Set("Don't panic")
+import (
+  "net/smtp"
 
-// input can be a bytes.Buffer, os.File, os.Stdin, etc.
-// call multiple times to attach multiple files
-mail.Attach("filename.txt", &input)
+  "github.com/xenking/mailyak/v3"
+)
 
-if err := my.Send(mail); err != nil {
+func main() {
+  my := mailyak.New("mail.host.com:25", smtp.PlainAuth("", "user", "pass", "mail.host.com"))
+
+  mail := my.NewMail()
+  mail.To("dom@itsallbroken.com")
+  mail.From("oops@itsallbroken.com")
+  mail.Subject("I am a teapot")
+  mail.HTML().SetString("Don't panic")
+
+  // input can be a bytes.Buffer, os.File, os.Stdin, etc.
+  // call multiple times to attach multiple files
+  mail.Attach("filename.txt", &input)
+
+  if err := my.Send(mail); err != nil {
     panic(" 💣 ")
+  }
 }
 ```
 

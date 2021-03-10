@@ -7,7 +7,6 @@ import (
 	"crypto/tls"
 	"io"
 	"net/smtp"
-	"text/template"
 )
 
 func Example() {
@@ -65,14 +64,6 @@ func Example_attachments() {
 	}
 }
 
-func ExampleBodyPart_string() {
-	// Create a new email - specify the SMTP host and auth
-	my := New("mail.host.com:25", smtp.PlainAuth("", "user", "pass", "mail.host.com"))
-	mail := my.NewMail()
-	// Set the plain text email content using a string
-	mail.Plain().SetString("Get a real email client")
-}
-
 func ExampleNewWithTLS() {
 	// Create a new Mail instance that uses an explicit TLS connection. This
 	// ensures no communication is performed in plain-text.
@@ -121,27 +112,6 @@ func ExampleNewWithTLS_with_config() {
 
 	mail.Plain().SetString("Have some encrypted goodness")
 	if err := my.Send(mail); err != nil {
-		panic(" :( ")
-	}
-}
-
-func ExampleBodyPart_templates() {
-	// Create a new email
-	my := New("mail.host.com:25", smtp.PlainAuth("", "user", "pass", "mail.host.com"))
-	mail := my.NewMail()
-	// Our pretend template data
-	tmplData := struct {
-		Language string
-	}{"Go"}
-
-	// Compile a template
-	tmpl, err := template.New("html").Parse("I am an email template in {{ .Language }}")
-	if err != nil {
-		panic(" :( ")
-	}
-
-	// Execute the template directly into the email body
-	if err := tmpl.Execute(mail.HTML(), tmplData); err != nil {
 		panic(" :( ")
 	}
 }

@@ -58,10 +58,10 @@ func (m *Mail) buildMimeWithBoundaries(w io.Writer, mb, ab string) error {
 	// close the mixed after.
 	tryWrite := func() error {
 		buf := bytebufferpool.Get()
-		buf.WriteString("Content-Type: multipart/mixed;\r\n\tboundary=\"")
-		buf.WriteString(mixed.Boundary())
-		buf.WriteString("\"; charset=UTF-8\r\n\r\n")
-		w.Write(buf.Bytes())
+		_, _ = buf.WriteString("Content-Type: multipart/mixed;\r\n\tboundary=\"")
+		_, _ = buf.WriteString(mixed.Boundary())
+		_, _ = buf.WriteString("\"; charset=UTF-8\r\n\r\n")
+		_, _ = w.Write(buf.Bytes())
 		bytebufferpool.Put(buf)
 
 		var ctype strings.Builder

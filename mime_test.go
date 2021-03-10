@@ -262,8 +262,8 @@ func TestMailWriteBody(t *testing.T) {
 			t.Parallel()
 
 			m := getMail()
-			m.HTML().WriteString(tt.rHTML)
-			m.Plain().WriteString(tt.rPlain)
+			_, _ = m.HTML().WriteString(tt.rHTML)
+			_, _ = m.Plain().WriteString(tt.rPlain)
 
 			w := &bytes.Buffer{}
 			if err := m.writeBody(w, tt.boundary); (err != nil) != tt.wantErr {
@@ -420,8 +420,8 @@ func TestMailBuildMime(t *testing.T) {
 			m.replyTo = tt.rreplyTo
 			m.date = now
 
-			m.HTML().Write(tt.rHTML)
-			m.Plain().Write(tt.rPlain)
+			_, _ = m.HTML().Write(tt.rHTML)
+			_, _ = m.Plain().Write(tt.rPlain)
 
 			buf := &bytes.Buffer{}
 			err := m.buildMimeWithBoundaries(buf, "mixed", "alt")
@@ -561,8 +561,8 @@ func TestMailBuildMime_withAttachments(t *testing.T) {
 			m.replyTo = tt.rreplyTo
 			m.attachments = tt.rattachments
 
-			m.HTML().Write(tt.rHTML)
-			m.Plain().Write(tt.rPlain)
+			_, _ = m.HTML().Write(tt.rHTML)
+			_, _ = m.Plain().Write(tt.rPlain)
 
 			buf := &bytes.Buffer{}
 			err := m.buildMimeWithBoundaries(buf, "mixed", "alt")

@@ -71,6 +71,9 @@ func NewWithTLS(host string, auth smtp.Auth, tlsConfig *tls.Config) (*MailYak, e
 	return m, nil
 }
 
+// NewMail returns new Mail from pool
+//
+// Mail used for concurrent mail calls Send
 func (m *MailYak) NewMail() *Mail {
 	mail := getMail()
 	mail.date = time.Now().Format(mailDateFormat)

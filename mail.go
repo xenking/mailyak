@@ -33,7 +33,9 @@ func putMail(m *Mail) {
 	mailPool.Put(m)
 }
 
+// Mail represents mail content
 type Mail struct {
+	// buffers holding the contents of an email MIME part.
 	html  *bytebufferpool.ByteBuffer
 	plain *bytebufferpool.ByteBuffer
 
@@ -51,6 +53,7 @@ type Mail struct {
 	writeBccHeader bool
 }
 
+// Reset clean Mail struct for reuse
 func (m *Mail) Reset() {
 	bytebufferpool.Put(m.html)
 	m.html = nil
