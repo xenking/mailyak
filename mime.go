@@ -5,13 +5,15 @@ import (
 	"crypto/rand"
 	"encoding/hex"
 	"fmt"
+	"github.com/valyala/bytebufferpool"
 	"io"
 	"mime/multipart"
 	"mime/quotedprintable"
 	"net/textproto"
+	"strings"
 )
 
-func (m *MailYak) buildMime(w io.Writer) error {
+func (m *Mail) buildMime(w io.Writer) error {
 	mb, err := randomBoundary()
 	if err != nil {
 		return err
@@ -41,7 +43,7 @@ func randomBoundary() (string, error) {
 
 // buildMimeWithBoundaries creates the MIME message using mb and ab as MIME
 // boundaries, and returns the generated MIME data as a buffer.
-func (m *MailYak) buildMimeWithBoundaries(w io.Writer, mb, ab string) error {
+func (m *Mail) buildMimeWithBoundaries(w io.Writer, mb, ab string) error {
 	if err := m.writeHeaders(w); err != nil {
 		return err
 	}
@@ -55,11 +57,19 @@ func (m *MailYak) buildMimeWithBoundaries(w io.Writer, mb, ab string) error {
 	// To avoid deferring a mixed.Close(), run the write in a closure and
 	// close the mixed after.
 	tryWrite := func() error {
-		fmt.Fprintf(w, "Content-Type: multipart/mixed;\r\n\tboundary=\"%s\"; charset=UTF-8\r\n\r\n", mixed.Boundary())
+		buf := bytebufferpool.Get()
+		buf.WriteString("Content-Type: multipart/mixed;\r\n\tboundary=\"")
+		buf.WriteString(mixed.Boundary())
+		buf.WriteString("\"; charset=UTF-8\r\n\r\n")
+		w.Write(buf.Bytes())
+		bytebufferpool.Put(buf)
 
-		ctype := fmt.Sprintf("multipart/alternative;\r\n\tboundary=\"%s\"", ab)
+		var ctype strings.Builder
+		ctype.WriteString("multipart/alternative;\n\tboundary=\"")
+		ctype.WriteString(ab)
+		ctype.WriteByte('"')
 
-		altPart, err := mixed.CreatePart(textproto.MIMEHeader{"Content-Type": {ctype}})
+		altPart, err := mixed.CreatePart(textproto.MIMEHeader{"Content-Type": {ctype.String()}})
 		if err != nil {
 			return err
 		}
@@ -84,48 +94,60 @@ func (m *MailYak) buildMimeWithBoundaries(w io.Writer, mb, ab string) error {
 
 // writeHeaders writes the Mime-Version, Date, Reply-To, From, To and Subject headers,
 // plus any custom headers set via AddHeader().
-func (m *MailYak) writeHeaders(w io.Writer) error {
+//goland:noinspection GoUnhandledErrorResult
+func (m *Mail) writeHeaders(w io.Writer) error {
+	buf := bytebufferpool.Get()
+	buf.WriteString(m.fromHeader())
+	buf.WriteString("Mime-Version: 1.0\r\n")
 
-	if _, err := w.Write([]byte(m.fromHeader())); err != nil {
-		return err
-	}
-
-	if _, err := w.Write([]byte("Mime-Version: 1.0\r\n")); err != nil {
-		return err
-	}
-
-	fmt.Fprintf(w, "Date: %s\r\n", m.date)
+	buf.WriteString("Date: ")
+	buf.WriteString(m.date)
+	buf.WriteString("\r\n")
 
 	if m.replyTo != "" {
-		fmt.Fprintf(w, "Reply-To: %s\r\n", m.replyTo)
+		buf.WriteString("Reply-To: ")
+		buf.WriteString(m.replyTo)
+		buf.WriteString("\r\n")
 	}
 
-	fmt.Fprintf(w, "Subject: %s\r\n", m.subject)
+	buf.WriteString("Subject: ")
+	buf.WriteString(m.subject)
+	buf.WriteString("\r\n")
 
 	for _, to := range m.toAddrs {
-		fmt.Fprintf(w, "To: %s\r\n", to)
+		buf.WriteString("To: ")
+		buf.WriteString(to)
+		buf.WriteString("\r\n")
 	}
 
 	for _, cc := range m.ccAddrs {
-		fmt.Fprintf(w, "CC: %s\r\n", cc)
+		buf.WriteString("CC: ")
+		buf.WriteString(cc)
+		buf.WriteString("\r\n")
 	}
 
 	if m.writeBccHeader {
 		for _, bcc := range m.bccAddrs {
-			fmt.Fprintf(w, "BCC: %s\r\n", bcc)
+			buf.WriteString("BCC: ")
+			buf.WriteString(bcc)
+			buf.WriteString("\r\n")
 		}
 	}
 
 	for k, v := range m.headers {
-		fmt.Fprintf(w, "%s: %s\r\n", k, v)
+		buf.WriteString(k)
+		buf.WriteString(": ")
+		buf.WriteString(v)
+		buf.WriteString("\r\n")
 	}
-
+	w.Write(buf.Bytes())
+	bytebufferpool.Put(buf)
 	return nil
 }
 
 // fromHeader returns a correctly formatted From header, optionally with a name
 // component.
-func (m *MailYak) fromHeader() string {
+func (m *Mail) fromHeader() string {
 	if m.fromName == "" {
 		return fmt.Sprintf("From: %s\r\n", m.fromAddr)
 	}
@@ -134,7 +156,7 @@ func (m *MailYak) fromHeader() string {
 }
 
 // writeBody writes the text/plain and text/html mime parts.
-func (m *MailYak) writeBody(w io.Writer, boundary string) error {
+func (m *Mail) writeBody(w io.Writer, boundary string) error {
 	alt := multipart.NewWriter(w)
 
 	if err := alt.SetBoundary(boundary); err != nil {
@@ -143,7 +165,7 @@ func (m *MailYak) writeBody(w io.Writer, boundary string) error {
 
 	var err error
 	writePart := func(ctype string, data []byte) {
-		if len(data) == 0 || err != nil {
+		if err != nil {
 			return
 		}
 

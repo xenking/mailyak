@@ -46,9 +46,9 @@ func (b nopBuilder) new(w io.Writer) io.Writer {
 	return &nopSplitter{w: w}
 }
 
-// TestMailYakAttach calls Attach() and ensures the attachment slice is the
+// TestMailAttach calls Attach() and ensures the attachment slice is the
 // correct length
-func TestMailYakAttach(t *testing.T) {
+func TestMailAttach(t *testing.T) {
 	t.Parallel()
 
 	tests := []struct {
@@ -81,20 +81,21 @@ func TestMailYakAttach(t *testing.T) {
 		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
-
-			m := &MailYak{attachments: tt.rattachments}
+			m := getMail()
+			m.attachments = tt.rattachments
 			m.Attach(tt.pname, tt.r)
 
 			if tt.count != len(m.attachments) {
-				t.Errorf("%q. MailYak.Attach() len = %v, wantLen %v", tt.name, len(m.attachments), tt.count)
+				t.Errorf("%q. Mail.Attach() len = %v, wantLen %v", tt.name, len(m.attachments), tt.count)
 			}
+			putMail(m)
 		})
 	}
 }
 
-// TestMailYakAttach calls AttachInline() and ensures the attachment slice is the
+// TestMailAttach calls AttachInline() and ensures the attachment slice is the
 // correct length
-func TestMailYakAttachInline(t *testing.T) {
+func TestMailAttachInline(t *testing.T) {
 	t.Parallel()
 
 	tests := []struct {
@@ -128,19 +129,21 @@ func TestMailYakAttachInline(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
-			m := &MailYak{attachments: tt.rattachments}
+			m := getMail()
+			m.attachments = tt.rattachments
 			m.AttachInline(tt.pname, tt.r)
 
 			if tt.count != len(m.attachments) {
-				t.Errorf("%q. MailYak.Attach() len = %v, wantLen %v", tt.name, len(m.attachments), tt.count)
+				t.Errorf("%q. Mail.Attach() len = %v, wantLen %v", tt.name, len(m.attachments), tt.count)
 			}
+			putMail(m)
 		})
 	}
 }
 
-// TestMailYakAttachWithMimeType calls AttachWithMimeType() and ensures the attachment slice is the
+// TestMailAttachWithMimeType calls AttachWithMimeType() and ensures the attachment slice is the
 // correct length
-func TestMailYakAttachWithMimeType(t *testing.T) {
+func TestMailAttachWithMimeType(t *testing.T) {
 	t.Parallel()
 
 	tests := []struct {
@@ -177,19 +180,21 @@ func TestMailYakAttachWithMimeType(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
-			m := &MailYak{attachments: tt.rattachments}
+			m := getMail()
+			m.attachments = tt.rattachments
 			m.AttachWithMimeType(tt.pname, tt.r, tt.mime)
 
 			if tt.count != len(m.attachments) {
-				t.Errorf("%q. MailYak.Attach() len = %v, wantLen %v", tt.name, len(m.attachments), tt.count)
+				t.Errorf("%q. Mail.Attach() len = %v, wantLen %v", tt.name, len(m.attachments), tt.count)
 			}
+			putMail(m)
 		})
 	}
 }
 
-// TestMailYakAttachWithMimeType calls AttachInlineWithMimeType() and ensures the attachment slice is the
+// TestMailAttachWithMimeType calls AttachInlineWithMimeType() and ensures the attachment slice is the
 // correct length
-func TestMailYakAttachInlineWithMimeType(t *testing.T) {
+func TestMailAttachInlineWithMimeType(t *testing.T) {
 	t.Parallel()
 
 	tests := []struct {
@@ -226,19 +231,21 @@ func TestMailYakAttachInlineWithMimeType(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
-			m := &MailYak{attachments: tt.rattachments}
+			m := getMail()
+			m.attachments = tt.rattachments
 			m.AttachInlineWithMimeType(tt.pname, tt.r, tt.mime)
 
 			if tt.count != len(m.attachments) {
-				t.Errorf("%q. MailYak.Attach() len = %v, wantLen %v", tt.name, len(m.attachments), tt.count)
+				t.Errorf("%q. Mail.Attach() len = %v, wantLen %v", tt.name, len(m.attachments), tt.count)
 			}
+			putMail(m)
 		})
 	}
 }
 
-// TestMailYakWriteAttachments ensures the correct headers are wrote, and the
+// TestMailWriteAttachments ensures the correct headers are wrote, and the
 // data is base64 encoded correctly
-func TestMailYakWriteAttachments(t *testing.T) {
+func TestMailWriteAttachments(t *testing.T) {
 	t.Parallel()
 
 	tests := []struct {
@@ -550,16 +557,17 @@ func TestMailYakWriteAttachments(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
-			m := MailYak{attachments: tt.rattachments}
+			m := getMail()
+			m.attachments = tt.rattachments
 			pc := testPartCreator{}
 
 			if err := m.writeAttachments(&pc, nopBuilder{}); (err != nil) != tt.wantErr {
-				t.Errorf("%q. MailYak.writeAttachments() error = %v, wantErr %v", tt.name, err, tt.wantErr)
+				t.Errorf("%q. Mail.writeAttachments() error = %v, wantErr %v", tt.name, err, tt.wantErr)
 			}
 
 			// Ensure there's an attachment
 			if len(pc.attachments) != 1 {
-				t.Fatalf("%q. MailYak.writeAttachments() unexpected number of attachments = %v, want 1", tt.name, len(pc.attachments))
+				t.Fatalf("%q. Mail.writeAttachments() unexpected number of attachments = %v, want 1", tt.name, len(pc.attachments))
 			}
 
 			if pc.attachments[0].contentType != tt.ctype {
@@ -573,6 +581,7 @@ func TestMailYakWriteAttachments(t *testing.T) {
 			if pc.attachments[0].data.String() != tt.data {
 				t.Errorf("%q. MailYak.writeAttachments() data = %v, want %v", tt.name, pc.attachments[0].data.String(), tt.data)
 			}
+			putMail(m)
 		})
 	}
 }
@@ -1046,7 +1055,8 @@ func TestMailYakWriteAttachments_multipleAttachments(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
-			m := MailYak{attachments: tt.rattachments}
+			m := getMail()
+			m.attachments = tt.rattachments
 			pc := testPartCreator{}
 
 			if err := m.writeAttachments(&pc, nopBuilder{}); (err != nil) != tt.wantErr {
@@ -1073,6 +1083,7 @@ func TestMailYakWriteAttachments_multipleAttachments(t *testing.T) {
 					t.Errorf("%q. MailYak.writeAttachments() data = %v, want %v", tt.name, want.data.String(), got.data.String())
 				}
 			}
+			putMail(m)
 		})
 	}
 }

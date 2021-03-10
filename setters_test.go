@@ -2,11 +2,10 @@ package mailyak
 
 import (
 	"reflect"
-	"regexp"
 	"testing"
 )
 
-func TestMailYakTo(t *testing.T) {
+func TestMailTo(t *testing.T) {
 	t.Parallel()
 
 	tests := []struct {
@@ -42,21 +41,20 @@ func TestMailYakTo(t *testing.T) {
 		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
+			m := getMail()
+			m.toAddrs = []string{}
 
-			m := &MailYak{
-				toAddrs:   []string{},
-				trimRegex: regexp.MustCompile("\r?\n"),
-			}
 			m.To(tt.addrs...)
 
 			if !reflect.DeepEqual(m.toAddrs, tt.want) {
-				t.Errorf("%q. MailYak.To() = %v, want %v", tt.name, m.toAddrs, tt.want)
+				t.Errorf("%q. Mail.To() = %v, want %v", tt.name, m.toAddrs, tt.want)
 			}
+
 		})
 	}
 }
 
-func TestMailYakBcc(t *testing.T) {
+func TestMailBcc(t *testing.T) {
 	t.Parallel()
 
 	tests := []struct {
@@ -92,20 +90,18 @@ func TestMailYakBcc(t *testing.T) {
 		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
-
-			m := &MailYak{
-				bccAddrs:  []string{},
-				trimRegex: regexp.MustCompile("\r?\n"),
-			}
+			m := getMail()
+			m.bccAddrs = []string{}
 			m.Bcc(tt.addrs...)
 
 			if !reflect.DeepEqual(m.bccAddrs, tt.want) {
-				t.Errorf("%q. MailYak.Bcc() = %v, want %v", tt.name, m.bccAddrs, tt.want)
+				t.Errorf("%q. Mail.Bcc() = %v, want %v", tt.name, m.bccAddrs, tt.want)
 			}
+			putMail(m)
 		})
 	}
 }
-func TestMailYakSubject(t *testing.T) {
+func TestMailSubject(t *testing.T) {
 	t.Parallel()
 
 	tests := []struct {
@@ -132,19 +128,18 @@ func TestMailYakSubject(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
-			m := &MailYak{
-				trimRegex: regexp.MustCompile("\r?\n"),
-			}
+			m := getMail()
 			m.Subject(tt.subject)
 
 			if !reflect.DeepEqual(m.subject, tt.want) {
-				t.Errorf("%q. MailYak.Subject() = %v, want %v", tt.name, m.subject, tt.want)
+				t.Errorf("%q. Mail.Subject() = %v, want %v", tt.name, m.subject, tt.want)
 			}
+			putMail(m)
 		})
 	}
 }
 
-func TestMailYakFromName(t *testing.T) {
+func TestMailFromName(t *testing.T) {
 	t.Parallel()
 
 	tests := []struct {
@@ -171,19 +166,18 @@ func TestMailYakFromName(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
-			m := &MailYak{
-				trimRegex: regexp.MustCompile("\r?\n"),
-			}
+			m := getMail()
 			m.FromName(tt.from)
 
 			if !reflect.DeepEqual(m.fromName, tt.want) {
-				t.Errorf("%q. MailYak.Subject() = %v, want %v", tt.name, m.fromName, tt.want)
+				t.Errorf("%q. Mail.Subject() = %v, want %v", tt.name, m.fromName, tt.want)
 			}
+			putMail(m)
 		})
 	}
 }
 
-func TestMailYakAddHeader(t *testing.T) {
+func TestMailAddHeader(t *testing.T) {
 	t.Parallel()
 
 	tests := []struct {
@@ -220,18 +214,16 @@ func TestMailYakAddHeader(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
-			m := &MailYak{
-				headers:   map[string]string{},
-				trimRegex: regexp.MustCompile("\r?\n"),
-			}
+			m := getMail()
 
 			for k, v := range tt.from {
 				m.AddHeader(k, v)
 			}
 
 			if !reflect.DeepEqual(m.headers, tt.want) {
-				t.Errorf("%q. MailYak.AddHeader() = %v, want %v", tt.name, m.headers, tt.want)
+				t.Errorf("%q. Mail.AddHeader() = %v, want %v", tt.name, m.headers, tt.want)
 			}
+			putMail(m)
 		})
 	}
 }

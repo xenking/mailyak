@@ -15,8 +15,8 @@ func Example() {
 	// needed).
 	//
 	// If you want to connect using TLS, use NewWithTLS() instead.
-	mail := New("mail.host.com:25", smtp.PlainAuth("", "user", "pass", "mail.host.com"))
-
+	my := New("mail.host.com:25", smtp.PlainAuth("", "user", "pass", "mail.host.com"))
+	mail := my.NewMail()
 	mail.To("dom@itsallbroken.com")
 	mail.From("jsmith@example.com")
 	mail.FromName("Prince Anybody")
@@ -34,10 +34,10 @@ func Example() {
 	}
 
 	// Or set the body using a string helper
-	mail.Plain().Set("Get a real email client")
+	mail.Plain().SetString("Get a real email client")
 
 	// And you're done!
-	if err := mail.Send(); err != nil {
+	if err := my.Send(mail); err != nil {
 		panic(" :( ")
 	}
 }
@@ -49,54 +49,56 @@ func Example_attachments() {
 
 	// Create a new email - specify the SMTP host:port and auth (or nil if not
 	// needed).
-	mail := New("mail.host.com:25", smtp.PlainAuth("", "user", "pass", "mail.host.com"))
+	my := New("mail.host.com:25", smtp.PlainAuth("", "user", "pass", "mail.host.com"))
+	mail := my.NewMail()
 
 	mail.To("dom@itsallbroken.com")
 	mail.From("jsmith@example.com")
-	mail.HTML().Set("I am an email")
+	mail.HTML().SetString("I am an email")
 
 	// buf could be anything that implements io.Reader, like a file on disk or
 	// an in-memory buffer.
 	mail.Attach("sticky.txt", buf)
 
-	if err := mail.Send(); err != nil {
+	if err := my.Send(mail); err != nil {
 		panic(" :( ")
 	}
 }
 
 func ExampleBodyPart_string() {
 	// Create a new email - specify the SMTP host and auth
-	mail := New("mail.host.com:25", smtp.PlainAuth("", "user", "pass", "mail.host.com"))
-
+	my := New("mail.host.com:25", smtp.PlainAuth("", "user", "pass", "mail.host.com"))
+	mail := my.NewMail()
 	// Set the plain text email content using a string
-	mail.Plain().Set("Get a real email client")
+	mail.Plain().SetString("Get a real email client")
 }
 
 func ExampleNewWithTLS() {
-	// Create a new MailYak instance that uses an explicit TLS connection. This
+	// Create a new Mail instance that uses an explicit TLS connection. This
 	// ensures no communication is performed in plain-text.
 	//
 	// Specify the SMTP host:port to connect to, the authentication credentials
 	// (or nil if not needed), and use an automatically generated TLS
 	// configuration by passing nil as the tls.Config argument.
-	mail, err := NewWithTLS("mail.host.com:25", smtp.PlainAuth("", "user", "pass", "mail.host.com"), nil)
+	my, err := NewWithTLS("mail.host.com:25", smtp.PlainAuth("", "user", "pass", "mail.host.com"), nil)
 	if err != nil {
 		panic("failed to initialise a TLS instance :(")
 	}
+	mail := my.NewMail()
 
-	mail.Plain().Set("Have some encrypted goodness")
-	if err := mail.Send(); err != nil {
+	mail.Plain().SetString("Have some encrypted goodness")
+	if err := my.Send(mail); err != nil {
 		panic(" :( ")
 	}
 }
 
 func ExampleNewWithTLS_with_config() {
-	// Create a new MailYak instance that uses an explicit TLS connection. This
+	// Create a new Mail instance that uses an explicit TLS connection. This
 	// ensures no communication is performed in plain-text.
 	//
 	// Specify the SMTP host:port to connect to, the authentication credentials
 	// (or nil if not needed), and use the tls.Config provided.
-	mail, err := NewWithTLS(
+	my, err := NewWithTLS(
 		"mail.host.com:25",
 		smtp.PlainAuth("", "user", "pass", "mail.host.com"),
 		&tls.Config{
@@ -115,17 +117,18 @@ func ExampleNewWithTLS_with_config() {
 	if err != nil {
 		panic("failed to initialise a TLS instance :(")
 	}
+	mail := my.NewMail()
 
-	mail.Plain().Set("Have some encrypted goodness")
-	if err := mail.Send(); err != nil {
+	mail.Plain().SetString("Have some encrypted goodness")
+	if err := my.Send(mail); err != nil {
 		panic(" :( ")
 	}
 }
 
 func ExampleBodyPart_templates() {
 	// Create a new email
-	mail := New("mail.host.com:25", smtp.PlainAuth("", "user", "pass", "mail.host.com"))
-
+	my := New("mail.host.com:25", smtp.PlainAuth("", "user", "pass", "mail.host.com"))
+	mail := my.NewMail()
 	// Our pretend template data
 	tmplData := struct {
 		Language string
@@ -143,9 +146,10 @@ func ExampleBodyPart_templates() {
 	}
 }
 
-func ExampleMailYak_AttachInline() {
+func ExampleMail_AttachInline() {
 	// Create a new email
-	mail := New("mail.host.com:25", smtp.PlainAuth("", "user", "pass", "mail.host.com"))
+	my := New("mail.host.com:25", smtp.PlainAuth("", "user", "pass", "mail.host.com"))
+	mail := my.NewMail()
 	mail.To("dom@itsallbroken.com")
 	mail.From("jsmith@example.com")
 
@@ -161,7 +165,7 @@ func ExampleMailYak_AttachInline() {
 	mail.AttachInline("myimage", imageBuffer)
 
 	// Set the HTML body, which includes the inline CID reference.
-	mail.HTML().Set(`
+	mail.HTML().SetString(`
 		<html>
 		<body>
 			<img src="cid:myimage"/>
@@ -170,7 +174,7 @@ func ExampleMailYak_AttachInline() {
 	`)
 
 	// Send it!
-	if err := mail.Send(); err != nil {
+	if err := my.Send(mail); err != nil {
 		panic(" :( ")
 	}
 }

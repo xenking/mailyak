@@ -32,7 +32,7 @@ type attachment struct {
 //
 // r is not read until Send is called and the MIME type will be detected
 // using https://golang.org/pkg/net/http/#DetectContentType
-func (m *MailYak) Attach(name string, r io.Reader) {
+func (m *Mail) Attach(name string, r io.Reader) {
 	m.attachments = append(m.attachments, attachment{
 		filename: name,
 		content:  r,
@@ -45,7 +45,7 @@ func (m *MailYak) Attach(name string, r io.Reader) {
 // It is up to the user to ensure the raw is correct.
 //
 // r is not read until Send is called.
-func (m *MailYak) AttachRaw(name string, r io.Reader, mimeType string) {
+func (m *Mail) AttachRaw(name string, r io.Reader, mimeType string) {
 	m.attachments = append(m.attachments, attachment{
 		filename: name,
 		content:  r,
@@ -60,7 +60,7 @@ func (m *MailYak) AttachRaw(name string, r io.Reader, mimeType string) {
 // It is up to the user to ensure the mimeType is correct.
 //
 // r is not read until Send is called.
-func (m *MailYak) AttachWithMimeType(name string, r io.Reader, mimeType string) {
+func (m *Mail) AttachWithMimeType(name string, r io.Reader, mimeType string) {
 	m.attachments = append(m.attachments, attachment{
 		filename: name,
 		content:  r,
@@ -80,7 +80,7 @@ func (m *MailYak) AttachWithMimeType(name string, r io.Reader, mimeType string) 
 //
 // r is not read until Send is called and the MIME type will be detected
 // using https://golang.org/pkg/net/http/#DetectContentType
-func (m *MailYak) AttachInline(name string, r io.Reader) {
+func (m *Mail) AttachInline(name string, r io.Reader) {
 	m.attachments = append(m.attachments, attachment{
 		filename: name,
 		content:  r,
@@ -99,7 +99,7 @@ func (m *MailYak) AttachInline(name string, r io.Reader) {
 // 		<img src="cid:myFileName"/>
 //
 // r is not read until Send is called.
-func (m *MailYak) AttachInlineWithMimeType(name string, r io.Reader, mimeType string) {
+func (m *Mail) AttachInlineWithMimeType(name string, r io.Reader, mimeType string) {
 	m.attachments = append(m.attachments, attachment{
 		filename: name,
 		content:  r,
@@ -109,13 +109,13 @@ func (m *MailYak) AttachInlineWithMimeType(name string, r io.Reader, mimeType st
 }
 
 // ClearAttachments removes all current attachments.
-func (m *MailYak) ClearAttachments() {
+func (m *Mail) ClearAttachments() {
 	m.attachments = []attachment{}
 }
 
 // writeAttachments loops over the attachments, guesses their content-type and
 // writes the data as a line-broken base64 string (using the splitter mutator).
-func (m *MailYak) writeAttachments(mixed partCreator, splitter writeWrapper) error {
+func (m *Mail) writeAttachments(mixed partCreator, splitter writeWrapper) error {
 	h := make([]byte, sniffLen)
 
 	for _, item := range m.attachments {
@@ -137,12 +137,12 @@ func (m *MailYak) writeAttachments(mixed partCreator, splitter writeWrapper) err
 
 		if item.raw {
 			rawWriter := splitter.new(part)
-			if _, err := rawWriter.Write(h[:hLen]); err != nil {
+			if _, err = rawWriter.Write(h[:hLen]); err != nil {
 				return err
 			}
 			// More to write?
 			if hLen == sniffLen {
-				if _, err := io.Copy(rawWriter, item.content); err != nil {
+				if _, err = io.Copy(rawWriter, item.content); err != nil {
 					return err
 				}
 			}
@@ -150,18 +150,18 @@ func (m *MailYak) writeAttachments(mixed partCreator, splitter writeWrapper) err
 		}
 
 		encoder := base64.NewEncoder(base64.StdEncoding, splitter.new(part))
-		if _, err := encoder.Write(h[:hLen]); err != nil {
+		if _, err = encoder.Write(h[:hLen]); err != nil {
 			return err
 		}
 
 		// More to write?
 		if hLen == sniffLen {
-			if _, err := io.Copy(encoder, item.content); err != nil {
+			if _, err = io.Copy(encoder, item.content); err != nil {
 				return err
 			}
 		}
 
-		if err := encoder.Close(); err != nil {
+		if err = encoder.Close(); err != nil {
 			return err
 		}
 	}

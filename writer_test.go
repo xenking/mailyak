@@ -39,8 +39,8 @@ func TestHTML(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
-			mail := New("", smtp.PlainAuth("", "", "", ""))
-
+			my := New("", smtp.PlainAuth("", "", "", ""))
+			mail := my.NewMail()
 			for _, data := range tt.data {
 				if _, err := io.WriteString(mail.HTML(), data); err != nil {
 					t.Errorf("%q. HTML() error = %v", tt.name, err)
@@ -75,8 +75,8 @@ func TestPlain(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
-			mail := New("", smtp.PlainAuth("", "", "", ""))
-
+			my := New("", smtp.PlainAuth("", "", "", ""))
+			mail := my.NewMail()
 			if _, err := io.WriteString(mail.Plain(), tt.data); err != nil {
 				t.Fatalf("%q. Plain() error = %v", tt.name, err)
 			}
@@ -110,8 +110,8 @@ func TestWritableString(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
-			mail := New("", smtp.PlainAuth("", "", "", ""))
-
+			my := New("", smtp.PlainAuth("", "", "", ""))
+			mail := my.NewMail()
 			if _, err := io.WriteString(mail.Plain(), tt.data); err != nil {
 				t.Fatalf("%q. Plain() error = %v", tt.name, err)
 			}
@@ -147,7 +147,8 @@ func TestPlain_String(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
-			mail := New("", smtp.PlainAuth("", "", "", ""))
+			my := New("", smtp.PlainAuth("", "", "", ""))
+			mail := my.NewMail()
 
 			if _, err := io.WriteString(mail.Plain(), tt.data); err != nil {
 				t.Fatalf("%q. Plain() error = %v", tt.name, err)

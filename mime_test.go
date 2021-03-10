@@ -6,14 +6,13 @@ import (
 	"io"
 	"io/ioutil"
 	"mime/multipart"
-	"regexp"
 	"strings"
 	"testing"
 	"time"
 )
 
-// TestMailYakFromHeader ensures the fromHeader method returns valid headers
-func TestMailYakFromHeader(t *testing.T) {
+// TestMailFromHeader ensures the fromHeader method returns valid headers
+func TestMailFromHeader(t *testing.T) {
 	t.Parallel()
 
 	tests := []struct {
@@ -49,21 +48,21 @@ func TestMailYakFromHeader(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
-			m := MailYak{
+			m := Mail{
 				fromAddr: tt.rfromAddr,
 				fromName: tt.rfromName,
 			}
 
 			if got := m.fromHeader(); got != tt.want {
-				t.Errorf("%q. MailYak.fromHeader() = %v, want %v", tt.name, got, tt.want)
+				t.Errorf("%q. Mail.fromHeader() = %v, want %v", tt.name, got, tt.want)
 			}
 		})
 	}
 }
 
-// TestMailYakWriteHeaders ensures the Mime-Version, Date, Reply-To, From, To and
+// TestMailWriteHeaders ensures the Mime-Version, Date, Reply-To, From, To and
 // Subject headers are correctly wrote
-func TestMailYakWriteHeaders(t *testing.T) {
+func TestMailWriteHeaders(t *testing.T) {
 	t.Parallel()
 
 	now := time.Now().Format(time.RFC1123Z)
@@ -176,7 +175,7 @@ func TestMailYakWriteHeaders(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
-			m := MailYak{
+			m := Mail{
 				toAddrs:        tt.rtoAddrs,
 				subject:        tt.rsubject,
 				fromAddr:       "dom@itsallbroken.com",
@@ -194,14 +193,14 @@ func TestMailYakWriteHeaders(t *testing.T) {
 			}
 
 			if gotBuf := buf.String(); gotBuf != tt.wantBuf {
-				t.Errorf("%q. MailYak.writeHeaders() = %v, want %v", tt.name, gotBuf, tt.wantBuf)
+				t.Errorf("%q. Mail.writeHeaders() = %v, want %v", tt.name, gotBuf, tt.wantBuf)
 			}
 		})
 	}
 }
 
-// TestMailYakWriteBody ensures the correct MIME parts are wrote for the body
-func TestMailYakWriteBody(t *testing.T) {
+// TestMailWriteBody ensures the correct MIME parts are wrote for the body
+func TestMailWriteBody(t *testing.T) {
 	t.Parallel()
 
 	tests := []struct {
@@ -217,11 +216,11 @@ func TestMailYakWriteBody(t *testing.T) {
 		wantErr bool
 	}{
 		{
-			"Boundary name",
+			"Empty",
 			"",
 			"",
 			"test",
-			"\r\n--test--\r\n",
+			"--test\r\nContent-Transfer-Encoding: quoted-printable\r\nContent-Type: text/plain; charset=UTF-8\r\n\r\n\r\n--test\r\nContent-Transfer-Encoding: quoted-printable\r\nContent-Type: text/html; charset=UTF-8\r\n\r\n\r\n--test--\r\n",
 			false,
 		},
 		{
@@ -229,7 +228,7 @@ func TestMailYakWriteBody(t *testing.T) {
 			"HTML",
 			"",
 			"t",
-			"--t\r\nContent-Transfer-Encoding: quoted-printable\r\nContent-Type: text/html; charset=UTF-8\r\n\r\nHTML\r\n--t--\r\n",
+			"--t\r\nContent-Transfer-Encoding: quoted-printable\r\nContent-Type: text/plain; charset=UTF-8\r\n\r\n\r\n--t\r\nContent-Transfer-Encoding: quoted-printable\r\nContent-Type: text/html; charset=UTF-8\r\n\r\nHTML\r\n--t--\r\n",
 			false,
 		},
 		{
@@ -237,7 +236,7 @@ func TestMailYakWriteBody(t *testing.T) {
 			"",
 			"Plain",
 			"t",
-			"--t\r\nContent-Transfer-Encoding: quoted-printable\r\nContent-Type: text/plain; charset=UTF-8\r\n\r\nPlain\r\n--t--\r\n",
+			"--t\r\nContent-Transfer-Encoding: quoted-printable\r\nContent-Type: text/plain; charset=UTF-8\r\n\r\nPlain\r\n--t\r\nContent-Transfer-Encoding: quoted-printable\r\nContent-Type: text/html; charset=UTF-8\r\n\r\n\r\n--t--\r\n",
 			false,
 		},
 		{
@@ -262,24 +261,25 @@ func TestMailYakWriteBody(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
-			m := MailYak{}
+			m := getMail()
 			m.HTML().WriteString(tt.rHTML)
 			m.Plain().WriteString(tt.rPlain)
 
 			w := &bytes.Buffer{}
 			if err := m.writeBody(w, tt.boundary); (err != nil) != tt.wantErr {
-				t.Fatalf("%q. MailYak.writeBody() error = %v, wantErr %v", tt.name, err, tt.wantErr)
+				t.Fatalf("%q. Mail.writeBody() error = %v, wantErr %v", tt.name, err, tt.wantErr)
 			}
 
 			if gotW := w.String(); gotW != tt.wantW {
-				t.Errorf("%q. MailYak.writeBody() = %v, want %v", tt.name, gotW, tt.wantW)
+				t.Errorf("%q. Mail.writeBody() = %v, want %v", tt.name, gotW, tt.wantW)
 			}
+			putMail(m)
 		})
 	}
 }
 
-// TestMailYakBuildMime tests all the other mime-related bits combine in a sane way
-func TestMailYakBuildMime(t *testing.T) {
+// TestMailBuildMime tests all the other mime-related bits combine in a sane way
+func TestMailBuildMime(t *testing.T) {
 	t.Parallel()
 
 	now := time.Now().Format(time.RFC1123Z)
@@ -307,7 +307,7 @@ func TestMailYakBuildMime(t *testing.T) {
 			"",
 			"",
 			"",
-			"From: \r\nMime-Version: 1.0\r\nDate: " + now + "\r\nSubject: \r\nTo: \r\nContent-Type: multipart/mixed;\r\n\tboundary=\"mixed\"; charset=UTF-8\r\n\r\n--mixed\r\nContent-Type: multipart/alternative;\r\n\tboundary=\"alt\"\r\n\r\n\r\n--alt--\r\n\r\n--mixed--\r\n",
+			"From: \r\nMime-Version: 1.0\r\nDate: " + now + "\r\nSubject: \r\nTo: \r\nContent-Type: multipart/mixed;\r\n\tboundary=\"mixed\"; charset=UTF-8\r\n\r\n--mixed\r\nContent-Type: multipart/alternative;\r\n\tboundary=\"alt\"\r\n\r\n--alt\r\nContent-Transfer-Encoding: quoted-printable\r\nContent-Type: text/plain; charset=UTF-8\r\n\r\n\r\n--alt\r\nContent-Transfer-Encoding: quoted-printable\r\nContent-Type: text/html; charset=UTF-8\r\n\r\n\r\n--alt--\r\n\r\n--mixed--\r\n",
 			false,
 		},
 		{
@@ -319,7 +319,7 @@ func TestMailYakBuildMime(t *testing.T) {
 			"",
 			"",
 			"",
-			"From: \r\nMime-Version: 1.0\r\nDate: " + now + "\r\nSubject: \r\nTo: \r\nContent-Type: multipart/mixed;\r\n\tboundary=\"mixed\"; charset=UTF-8\r\n\r\n--mixed\r\nContent-Type: multipart/alternative;\r\n\tboundary=\"alt\"\r\n\r\n--alt\r\nContent-Transfer-Encoding: quoted-printable\r\nContent-Type: text/html; charset=UTF-8\r\n\r\nHTML\r\n--alt--\r\n\r\n--mixed--\r\n",
+			"From: \r\nMime-Version: 1.0\r\nDate: " + now + "\r\nSubject: \r\nTo: \r\nContent-Type: multipart/mixed;\r\n\tboundary=\"mixed\"; charset=UTF-8\r\n\r\n--mixed\r\nContent-Type: multipart/alternative;\r\n\tboundary=\"alt\"\r\n\r\n--alt\r\nContent-Transfer-Encoding: quoted-printable\r\nContent-Type: text/plain; charset=UTF-8\r\n\r\n\r\n--alt\r\nContent-Transfer-Encoding: quoted-printable\r\nContent-Type: text/html; charset=UTF-8\r\n\r\nHTML\r\n--alt--\r\n\r\n--mixed--\r\n",
 			false,
 		},
 		{
@@ -331,7 +331,7 @@ func TestMailYakBuildMime(t *testing.T) {
 			"",
 			"",
 			"",
-			"From: \r\nMime-Version: 1.0\r\nDate: " + now + "\r\nSubject: \r\nTo: \r\nContent-Type: multipart/mixed;\r\n\tboundary=\"mixed\"; charset=UTF-8\r\n\r\n--mixed\r\nContent-Type: multipart/alternative;\r\n\tboundary=\"alt\"\r\n\r\n--alt\r\nContent-Transfer-Encoding: quoted-printable\r\nContent-Type: text/plain; charset=UTF-8\r\n\r\nPlain\r\n--alt--\r\n\r\n--mixed--\r\n",
+			"From: \r\nMime-Version: 1.0\r\nDate: " + now + "\r\nSubject: \r\nTo: \r\nContent-Type: multipart/mixed;\r\n\tboundary=\"mixed\"; charset=UTF-8\r\n\r\n--mixed\r\nContent-Type: multipart/alternative;\r\n\tboundary=\"alt\"\r\n\r\n--alt\r\nContent-Transfer-Encoding: quoted-printable\r\nContent-Type: text/plain; charset=UTF-8\r\n\r\nPlain\r\n--alt\r\nContent-Transfer-Encoding: quoted-printable\r\nContent-Type: text/html; charset=UTF-8\r\n\r\n\r\n--alt--\r\n\r\n--mixed--\r\n",
 			false,
 		},
 		{
@@ -343,7 +343,7 @@ func TestMailYakBuildMime(t *testing.T) {
 			"",
 			"",
 			"reply",
-			"From: \r\nMime-Version: 1.0\r\nDate: " + now + "\r\nReply-To: reply\r\nSubject: \r\nTo: \r\nContent-Type: multipart/mixed;\r\n\tboundary=\"mixed\"; charset=UTF-8\r\n\r\n--mixed\r\nContent-Type: multipart/alternative;\r\n\tboundary=\"alt\"\r\n\r\n\r\n--alt--\r\n\r\n--mixed--\r\n",
+			"From: \r\nMime-Version: 1.0\r\nDate: " + now + "\r\nReply-To: reply\r\nSubject: \r\nTo: \r\nContent-Type: multipart/mixed;\r\n\tboundary=\"mixed\"; charset=UTF-8\r\n\r\n--mixed\r\nContent-Type: multipart/alternative;\r\n\tboundary=\"alt\"\r\n\r\n--alt\r\nContent-Transfer-Encoding: quoted-printable\r\nContent-Type: text/plain; charset=UTF-8\r\n\r\n\r\n--alt\r\nContent-Transfer-Encoding: quoted-printable\r\nContent-Type: text/html; charset=UTF-8\r\n\r\n\r\n--alt--\r\n\r\n--mixed--\r\n",
 			false,
 		},
 		{
@@ -355,7 +355,7 @@ func TestMailYakBuildMime(t *testing.T) {
 			"",
 			"name",
 			"",
-			"From: name <>\r\nMime-Version: 1.0\r\nDate: " + now + "\r\nSubject: \r\nTo: \r\nContent-Type: multipart/mixed;\r\n\tboundary=\"mixed\"; charset=UTF-8\r\n\r\n--mixed\r\nContent-Type: multipart/alternative;\r\n\tboundary=\"alt\"\r\n\r\n\r\n--alt--\r\n\r\n--mixed--\r\n",
+			"From: name <>\r\nMime-Version: 1.0\r\nDate: " + now + "\r\nSubject: \r\nTo: \r\nContent-Type: multipart/mixed;\r\n\tboundary=\"mixed\"; charset=UTF-8\r\n\r\n--mixed\r\nContent-Type: multipart/alternative;\r\n\tboundary=\"alt\"\r\n\r\n--alt\r\nContent-Transfer-Encoding: quoted-printable\r\nContent-Type: text/plain; charset=UTF-8\r\n\r\n\r\n--alt\r\nContent-Transfer-Encoding: quoted-printable\r\nContent-Type: text/html; charset=UTF-8\r\n\r\n\r\n--alt--\r\n\r\n--mixed--\r\n",
 			false,
 		},
 		{
@@ -367,7 +367,7 @@ func TestMailYakBuildMime(t *testing.T) {
 			"addr",
 			"name",
 			"",
-			"From: name <addr>\r\nMime-Version: 1.0\r\nDate: " + now + "\r\nSubject: \r\nTo: \r\nContent-Type: multipart/mixed;\r\n\tboundary=\"mixed\"; charset=UTF-8\r\n\r\n--mixed\r\nContent-Type: multipart/alternative;\r\n\tboundary=\"alt\"\r\n\r\n\r\n--alt--\r\n\r\n--mixed--\r\n",
+			"From: name <addr>\r\nMime-Version: 1.0\r\nDate: " + now + "\r\nSubject: \r\nTo: \r\nContent-Type: multipart/mixed;\r\n\tboundary=\"mixed\"; charset=UTF-8\r\n\r\n--mixed\r\nContent-Type: multipart/alternative;\r\n\tboundary=\"alt\"\r\n\r\n--alt\r\nContent-Transfer-Encoding: quoted-printable\r\nContent-Type: text/plain; charset=UTF-8\r\n\r\n\r\n--alt\r\nContent-Transfer-Encoding: quoted-printable\r\nContent-Type: text/html; charset=UTF-8\r\n\r\n\r\n--alt--\r\n\r\n--mixed--\r\n",
 			false,
 		},
 		{
@@ -379,7 +379,7 @@ func TestMailYakBuildMime(t *testing.T) {
 			"from",
 			"",
 			"",
-			"From: from\r\nMime-Version: 1.0\r\nDate: " + now + "\r\nSubject: \r\nTo: \r\nContent-Type: multipart/mixed;\r\n\tboundary=\"mixed\"; charset=UTF-8\r\n\r\n--mixed\r\nContent-Type: multipart/alternative;\r\n\tboundary=\"alt\"\r\n\r\n\r\n--alt--\r\n\r\n--mixed--\r\n",
+			"From: from\r\nMime-Version: 1.0\r\nDate: " + now + "\r\nSubject: \r\nTo: \r\nContent-Type: multipart/mixed;\r\n\tboundary=\"mixed\"; charset=UTF-8\r\n\r\n--mixed\r\nContent-Type: multipart/alternative;\r\n\tboundary=\"alt\"\r\n\r\n--alt\r\nContent-Transfer-Encoding: quoted-printable\r\nContent-Type: text/plain; charset=UTF-8\r\n\r\n\r\n--alt\r\nContent-Transfer-Encoding: quoted-printable\r\nContent-Type: text/html; charset=UTF-8\r\n\r\n\r\n--alt--\r\n\r\n--mixed--\r\n",
 			false,
 		},
 		{
@@ -391,7 +391,7 @@ func TestMailYakBuildMime(t *testing.T) {
 			"",
 			"",
 			"",
-			"From: \r\nMime-Version: 1.0\r\nDate: " + now + "\r\nSubject: subject\r\nTo: \r\nContent-Type: multipart/mixed;\r\n\tboundary=\"mixed\"; charset=UTF-8\r\n\r\n--mixed\r\nContent-Type: multipart/alternative;\r\n\tboundary=\"alt\"\r\n\r\n\r\n--alt--\r\n\r\n--mixed--\r\n",
+			"From: \r\nMime-Version: 1.0\r\nDate: " + now + "\r\nSubject: subject\r\nTo: \r\nContent-Type: multipart/mixed;\r\n\tboundary=\"mixed\"; charset=UTF-8\r\n\r\n--mixed\r\nContent-Type: multipart/alternative;\r\n\tboundary=\"alt\"\r\n\r\n--alt\r\nContent-Transfer-Encoding: quoted-printable\r\nContent-Type: text/plain; charset=UTF-8\r\n\r\n\r\n--alt\r\nContent-Transfer-Encoding: quoted-printable\r\nContent-Type: text/html; charset=UTF-8\r\n\r\n\r\n--alt--\r\n\r\n--mixed--\r\n",
 			false,
 		},
 		{
@@ -403,45 +403,41 @@ func TestMailYakBuildMime(t *testing.T) {
 			"",
 			"",
 			"",
-			"From: \r\nMime-Version: 1.0\r\nDate: " + now + "\r\nSubject: \r\nTo: one\r\nTo: two\r\nContent-Type: multipart/mixed;\r\n\tboundary=\"mixed\"; charset=UTF-8\r\n\r\n--mixed\r\nContent-Type: multipart/alternative;\r\n\tboundary=\"alt\"\r\n\r\n\r\n--alt--\r\n\r\n--mixed--\r\n",
+			"From: \r\nMime-Version: 1.0\r\nDate: " + now + "\r\nSubject: \r\nTo: one\r\nTo: two\r\nContent-Type: multipart/mixed;\r\n\tboundary=\"mixed\"; charset=UTF-8\r\n\r\n--mixed\r\nContent-Type: multipart/alternative;\r\n\tboundary=\"alt\"\r\n\r\n--alt\r\nContent-Transfer-Encoding: quoted-printable\r\nContent-Type: text/plain; charset=UTF-8\r\n\r\n\r\n--alt\r\nContent-Transfer-Encoding: quoted-printable\r\nContent-Type: text/html; charset=UTF-8\r\n\r\n\r\n--alt--\r\n\r\n--mixed--\r\n",
 			false,
 		},
 	}
-
-	regex := regexp.MustCompile("\r?\n")
-
 	for _, tt := range tests {
 		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
-			m := &MailYak{
-				toAddrs:   tt.rtoAddrs,
-				subject:   tt.rsubject,
-				fromAddr:  tt.rfromAddr,
-				fromName:  tt.rfromName,
-				replyTo:   tt.rreplyTo,
-				trimRegex: regex,
-				date:      now,
-			}
+			m := getMail()
+			m.toAddrs = tt.rtoAddrs
+			m.subject = tt.rsubject
+			m.fromAddr = tt.rfromAddr
+			m.fromName = tt.rfromName
+			m.replyTo = tt.rreplyTo
+			m.date = now
+
 			m.HTML().Write(tt.rHTML)
 			m.Plain().Write(tt.rPlain)
 
 			buf := &bytes.Buffer{}
 			err := m.buildMimeWithBoundaries(buf, "mixed", "alt")
 			if (err != nil) != tt.wantErr {
-				t.Fatalf("%q. MailYak.buildMime() error = %v, wantErr %v", tt.name, err, tt.wantErr)
+				t.Fatalf("%q. Mail.buildMime() error = %v, wantErr %v", tt.name, err, tt.wantErr)
 			}
 
-			if buf.String() != tt.want {
-				t.Errorf("%q. MailYak.buildMime() = %v, want %v", tt.name, buf.String(), tt.want)
+			if bytes.Equal(buf.Bytes(), []byte(tt.want)) {
+				t.Errorf("%q. Mail.buildMime() = %v, want %v", tt.name, buf.Bytes(), []byte(tt.want))
 			}
 		})
 	}
 }
 
-// TestMailYakBuildMime_withAttachments ensures attachments are correctly added to the MIME message
-func TestMailYakBuildMime_withAttachments(t *testing.T) {
+// TestMailBuildMime_withAttachments ensures attachments are correctly added to the MIME message
+func TestMailBuildMime_withAttachments(t *testing.T) {
 	t.Parallel()
 
 	tests := []struct {
@@ -552,29 +548,26 @@ func TestMailYakBuildMime_withAttachments(t *testing.T) {
 		},
 	}
 
-	regex := regexp.MustCompile("\r?\n")
-
 	for _, tt := range tests {
 		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
-			m := &MailYak{
-				toAddrs:     tt.rtoAddrs,
-				subject:     tt.rsubject,
-				fromAddr:    tt.rfromAddr,
-				fromName:    tt.rfromName,
-				replyTo:     tt.rreplyTo,
-				attachments: tt.rattachments,
-				trimRegex:   regex,
-			}
+			m := getMail()
+			m.toAddrs = tt.rtoAddrs
+			m.subject = tt.rsubject
+			m.fromAddr = tt.rfromAddr
+			m.fromName = tt.rfromName
+			m.replyTo = tt.rreplyTo
+			m.attachments = tt.rattachments
+
 			m.HTML().Write(tt.rHTML)
 			m.Plain().Write(tt.rPlain)
 
 			buf := &bytes.Buffer{}
 			err := m.buildMimeWithBoundaries(buf, "mixed", "alt")
 			if (err != nil) != tt.wantErr {
-				t.Fatalf("%q. MailYak.buildMime() error = %v, wantErr %v", tt.name, err, tt.wantErr)
+				t.Fatalf("%q. Mail.buildMime() error = %v, wantErr %v", tt.name, err, tt.wantErr)
 			}
 
 			seen := 0
@@ -587,13 +580,13 @@ func TestMailYakBuildMime_withAttachments(t *testing.T) {
 					break
 				}
 				if err != nil {
-					t.Errorf("%q. MailYak.buildMime() error = %v, wantErr %v", tt.name, err, tt.wantErr)
+					t.Errorf("%q. Mail.buildMime() error = %v, wantErr %v", tt.name, err, tt.wantErr)
 				}
 
 				// Read the attachment data
 				slurp, err := ioutil.ReadAll(p)
 				if err != nil {
-					t.Errorf("%q. MailYak.buildMime() error = %v, wantErr %v", tt.name, err, tt.wantErr)
+					t.Errorf("%q. Mail.buildMime() error = %v, wantErr %v", tt.name, err, tt.wantErr)
 				}
 
 				// Skip non-attachments
@@ -627,7 +620,7 @@ func TestMailYakBuildMime_withAttachments(t *testing.T) {
 
 			// Did we see all the expected attachments?
 			if seen != len(tt.rattachments) {
-				t.Errorf("%q. MailYak.buildMime() didn't find all attachments in mime body", tt.name)
+				t.Errorf("%q. Mail.buildMime() didn't find all attachments in mime body", tt.name)
 			}
 		})
 	}

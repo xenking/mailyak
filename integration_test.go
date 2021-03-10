@@ -38,21 +38,21 @@ func TestIntegration_TLS(t *testing.T) {
 		name string
 		auth smtp.Auth
 
-		fn func(m *MailYak)
+		fn func(m *Mail)
 
 		wantErr error
 	}{
 		{
 			name: "ok",
-			fn: func(m *MailYak) {
+			fn: func(m *Mail) {
 				m.From("from@example.org")
 				m.FromName("From Example")
 				m.To("to@example.org")
 				m.Bcc("bcc1@example.org", "bcc2@example.org")
 				m.Subject("TLS test")
 				m.ReplyTo("replies@example.org")
-				m.HTML().Set("HTML part: this is just a test.")
-				m.Plain().Set("Plain text part: this is also just a test.")
+				m.HTML().SetString("HTML part: this is just a test.")
+				m.Plain().SetString("Plain text part: this is also just a test.")
 				m.Attach("test.html", strings.NewReader("<html><head></head></html>"))
 				m.Attach("test2.html", strings.NewReader("<html><head></head></html>"))
 				m.AddHeader("Precedence", "bulk")
@@ -60,17 +60,29 @@ func TestIntegration_TLS(t *testing.T) {
 			wantErr: nil,
 		},
 		{
+			name: "empty",
+			fn: func(m *Mail) {
+				m.From("from@example.org")
+				m.FromName("From Example")
+				m.To("dom@eitsallbroken.com")
+				m.Bcc("bcc1@example.org", "bcc2@example.org")
+				m.Subject("TLS empty")
+				m.ReplyTo("replies@example.org")
+			},
+			wantErr: nil,
+		},
+		{
 			name: "authenticated",
 			auth: smtp.PlainAuth("ident", "user", "pass", "127.0.0.1"),
-			fn: func(m *MailYak) {
+			fn: func(m *Mail) {
 				m.From("from@example.org")
 				m.FromName("From Example")
 				m.To("to@example.org")
 				m.Bcc("bcc1@example.org", "bcc2@example.org")
 				m.Subject("TLS test")
 				m.ReplyTo("replies@example.org")
-				m.HTML().Set("HTML part: this is just a test.")
-				m.Plain().Set("Plain text part: this is also just a test.")
+				m.HTML().SetString("HTML part: this is just a test.")
+				m.Plain().SetString("Plain text part: this is also just a test.")
 				m.Attach("test.html", strings.NewReader("<html><head></head></html>"))
 				m.Attach("test2.html", strings.NewReader("<html><head></head></html>"))
 				m.AddHeader("Precedence", "bulk")
@@ -79,7 +91,7 @@ func TestIntegration_TLS(t *testing.T) {
 		},
 		{
 			name: "binary attachment",
-			fn: func(m *MailYak) {
+			fn: func(m *Mail) {
 				data := make([]byte, 1024*5)
 				_, _ = rand.Read(data)
 				hash := md5.Sum(data)
@@ -90,7 +102,7 @@ func TestIntegration_TLS(t *testing.T) {
 				m.To("to@example.org")
 				m.Subject("TLS Attachment test")
 				m.ReplyTo("replies@example.org")
-				m.HTML().Set("Attachment MF5: " + hashString)
+				m.HTML().SetString("Attachment MD5: " + hashString)
 				m.Attach("test.bin", bytes.NewReader(data))
 			},
 			wantErr: nil,
@@ -103,7 +115,7 @@ func TestIntegration_TLS(t *testing.T) {
 			t.Parallel()
 
 			// Initialise a TLS mailyak instance with terrible security.
-			mail, err := NewWithTLS(tlsEndpoint(t), tt.auth, &tls.Config{
+			my, err := NewWithTLS(tlsEndpoint(t), tt.auth, &tls.Config{
 				// Please, never do this outside of a test.
 				InsecureSkipVerify: true,
 				ServerName:         "127.0.0.1",
@@ -111,12 +123,13 @@ func TestIntegration_TLS(t *testing.T) {
 			if err != nil {
 				t.Fatal(err)
 			}
+			mail := my.NewMail()
 
 			// Apply some mutations to the email
 			tt.fn(mail)
 
 			// Send the email
-			err = mail.Send()
+			err = my.Send(mail)
 			if !reflect.DeepEqual(err, tt.wantErr) {
 				t.Errorf("got %v, want %v", err, tt.wantErr)
 			}
@@ -131,21 +144,21 @@ func TestIntegration_PlainText(t *testing.T) {
 		name string
 		auth smtp.Auth
 
-		fn func(m *MailYak)
+		fn func(m *Mail)
 
 		wantErr error
 	}{
 		{
 			name: "ok",
-			fn: func(m *MailYak) {
+			fn: func(m *Mail) {
 				m.From("from@example.org")
 				m.FromName("From Example")
 				m.To("to@example.org")
 				m.Bcc("bcc1@example.org", "bcc2@example.org")
 				m.Subject("PLAIN - Test subject")
 				m.ReplyTo("replies@example.org")
-				m.HTML().Set("HTML part: this is just a test.")
-				m.Plain().Set("Plain text part: this is also just a test.")
+				m.HTML().SetString("HTML part: this is just a test.")
+				m.Plain().SetString("Plain text part: this is also just a test.")
 				m.Attach("test.html", strings.NewReader("<html><head></head></html>"))
 				m.Attach("test2.html", strings.NewReader("<html><head></head></html>"))
 				m.AddHeader("Precedence", "bulk")
@@ -153,17 +166,29 @@ func TestIntegration_PlainText(t *testing.T) {
 			wantErr: nil,
 		},
 		{
+			name: "empty",
+			fn: func(m *Mail) {
+				m.From("from@example.org")
+				m.FromName("From Example")
+				m.To("dom@eitsallbroken.com")
+				m.Bcc("bcc1@example.org", "bcc2@example.org")
+				m.Subject("Plaintext empty")
+				m.ReplyTo("replies@example.org")
+			},
+			wantErr: nil,
+		},
+		{
 			name: "authenticated",
 			auth: smtp.PlainAuth("ident", "user", "pass", "127.0.0.1"),
-			fn: func(m *MailYak) {
+			fn: func(m *Mail) {
 				m.From("from@example.org")
 				m.FromName("From Example")
 				m.To("to@example.org")
 				m.Bcc("bcc1@example.org", "bcc2@example.org")
 				m.Subject("PLAIN - TLS test")
 				m.ReplyTo("replies@example.org")
-				m.HTML().Set("HTML part: this is just a test.")
-				m.Plain().Set("Plain text part: this is also just a test.")
+				m.HTML().SetString("HTML part: this is just a test.")
+				m.Plain().SetString("Plain text part: this is also just a test.")
 				m.Attach("test.html", strings.NewReader("<html><head></head></html>"))
 				m.Attach("test2.html", strings.NewReader("<html><head></head></html>"))
 				m.AddHeader("Precedence", "bulk")
@@ -172,7 +197,7 @@ func TestIntegration_PlainText(t *testing.T) {
 		},
 		{
 			name: "binary attachment",
-			fn: func(m *MailYak) {
+			fn: func(m *Mail) {
 				data := make([]byte, 1024*5)
 				_, _ = rand.Read(data)
 				hash := md5.Sum(data)
@@ -183,7 +208,7 @@ func TestIntegration_PlainText(t *testing.T) {
 				m.To("to@example.org")
 				m.Subject("PLAIN - Attachment test")
 				m.ReplyTo("replies@example.org")
-				m.HTML().Set("Attachment MF5: " + hashString)
+				m.HTML().SetString("Attachment MD5: " + hashString)
 				m.Attach("test.bin", bytes.NewReader(data))
 			},
 			wantErr: nil,
@@ -195,13 +220,13 @@ func TestIntegration_PlainText(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
-			mail := New(plaintextEndpoint(t), tt.auth)
-
+			my := New(plaintextEndpoint(t), tt.auth)
+			mail := my.NewMail()
 			// Apply some mutations to the email
 			tt.fn(mail)
 
 			// Send the email
-			err := mail.Send()
+			err := my.Send(mail)
 			if !reflect.DeepEqual(err, tt.wantErr) {
 				t.Errorf("got %v, want %v", err, tt.wantErr)
 			}

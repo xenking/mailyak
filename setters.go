@@ -16,11 +16,11 @@ import "mime"
 //	}
 //
 //	mail.To(tos...)
-func (m *MailYak) To(addrs ...string) {
+func (m *Mail) To(addrs ...string) {
 	m.toAddrs = []string{}
 
 	for _, addr := range addrs {
-		trimmed := m.trimRegex.ReplaceAllString(addr, "")
+		trimmed := trimRegex.ReplaceAllString(addr, "")
 		if trimmed == "" {
 			continue
 		}
@@ -43,11 +43,11 @@ func (m *MailYak) To(addrs ...string) {
 //	}
 //
 // 	mail.Bcc(bccs...)
-func (m *MailYak) Bcc(addrs ...string) {
+func (m *Mail) Bcc(addrs ...string) {
 	m.bccAddrs = []string{}
 
 	for _, addr := range addrs {
-		trimmed := m.trimRegex.ReplaceAllString(addr, "")
+		trimmed := trimRegex.ReplaceAllString(addr, "")
 		if trimmed == "" {
 			continue
 		}
@@ -73,7 +73,7 @@ func (m *MailYak) Bcc(addrs ...string) {
 //
 // 		https://github.com/domodwyer/mailyak/issues/14
 //
-func (m *MailYak) WriteBccHeader(shouldWrite bool) {
+func (m *Mail) WriteBccHeader(shouldWrite bool) {
 	m.writeBccHeader = shouldWrite
 }
 
@@ -91,11 +91,11 @@ func (m *MailYak) WriteBccHeader(shouldWrite bool) {
 //	}
 //
 // 	mail.Cc(ccs...)
-func (m *MailYak) Cc(addrs ...string) {
+func (m *Mail) Cc(addrs ...string) {
 	m.ccAddrs = []string{}
 
 	for _, addr := range addrs {
-		trimmed := m.trimRegex.ReplaceAllString(addr, "")
+		trimmed := trimRegex.ReplaceAllString(addr, "")
 		if trimmed == "" {
 			continue
 		}
@@ -107,8 +107,8 @@ func (m *MailYak) Cc(addrs ...string) {
 // From sets the sender email address.
 //
 // Users should also consider setting FromName().
-func (m *MailYak) From(addr string) {
-	m.fromAddr = m.trimRegex.ReplaceAllString(addr, "")
+func (m *Mail) From(addr string) {
+	m.fromAddr = trimRegex.ReplaceAllString(addr, "")
 }
 
 // FromName sets the sender name.
@@ -118,22 +118,22 @@ func (m *MailYak) From(addr string) {
 // 		From Name <sender@example.com>
 //
 // If name contains non-ASCII characters, it is Q-encoded according to RFC1342.
-func (m *MailYak) FromName(name string) {
-	m.fromName = mime.QEncoding.Encode("UTF-8", m.trimRegex.ReplaceAllString(name, ""))
+func (m *Mail) FromName(name string) {
+	m.fromName = mime.QEncoding.Encode("UTF-8", trimRegex.ReplaceAllString(name, ""))
 }
 
 // ReplyTo sets the Reply-To email address.
 //
 // Setting a ReplyTo address is optional.
-func (m *MailYak) ReplyTo(addr string) {
-	m.replyTo = m.trimRegex.ReplaceAllString(addr, "")
+func (m *Mail) ReplyTo(addr string) {
+	m.replyTo = trimRegex.ReplaceAllString(addr, "")
 }
 
 // Subject sets the email subject line.
 //
 // If sub contains non-ASCII characters, it is Q-encoded according to RFC1342.
-func (m *MailYak) Subject(sub string) {
-	m.subject = mime.QEncoding.Encode("UTF-8", m.trimRegex.ReplaceAllString(sub, ""))
+func (m *Mail) Subject(sub string) {
+	m.subject = mime.QEncoding.Encode("UTF-8", trimRegex.ReplaceAllString(sub, ""))
 }
 
 // AddHeader adds an arbitrary email header.
@@ -142,6 +142,6 @@ func (m *MailYak) Subject(sub string) {
 // As always, validate any user input before adding it to a message, as this
 // method may enable an attacker to override the standard headers and, for
 // example, BCC themselves in a password reset email to a different user.
-func (m *MailYak) AddHeader(name, value string) {
-	m.headers[m.trimRegex.ReplaceAllString(name, "")] = mime.QEncoding.Encode("UTF-8", m.trimRegex.ReplaceAllString(value, ""))
+func (m *Mail) AddHeader(name, value string) {
+	m.headers[trimRegex.ReplaceAllString(name, "")] = mime.QEncoding.Encode("UTF-8", trimRegex.ReplaceAllString(value, ""))
 }
