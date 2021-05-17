@@ -157,6 +157,11 @@ func (m *Mail) fromHeader() string {
 
 // writeBody writes the text/plain and text/html mime parts.
 func (m *Mail) writeBody(w io.Writer, boundary string) error {
+	if m.plain.Len() == 0 && m.html.Len() == 0 {
+		// No body to write - just skip it
+		return nil
+	}
+
 	alt := multipart.NewWriter(w)
 
 	if err := alt.SetBoundary(boundary); err != nil {
@@ -165,7 +170,7 @@ func (m *Mail) writeBody(w io.Writer, boundary string) error {
 
 	var err error
 	writePart := func(ctype string, data []byte) {
-		if err != nil {
+		if len(data) == 0 || err != nil {
 			return
 		}
 
